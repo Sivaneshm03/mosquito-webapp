@@ -13,19 +13,30 @@ MODEL_PATH = "mosquito_model.h5"
 model = None
 
 
-# ✅ Download model if not exists
+# ✅ FIXED DOWNLOAD FUNCTION (Google Drive compatible)
 def download_model():
     if not os.path.exists(MODEL_PATH):
         print("⬇️ Downloading model...")
-        r = requests.get(MODEL_URL, stream=True)
+
+        session = requests.Session()
+        response = session.get(MODEL_URL, stream=True)
+
+        # Handle Google Drive large file confirmation
+        for key, value in response.cookies.items():
+            if key.startswith('download_warning'):
+                params = {'id': MODEL_URL.split("id=")[-1], 'confirm': value}
+                response = session.get(MODEL_URL, params=params, stream=True)
+                break
+
         with open(MODEL_PATH, "wb") as f:
-            for chunk in r.iter_content(chunk_size=8192):
+            for chunk in response.iter_content(32768):
                 if chunk:
                     f.write(chunk)
-        print("✅ Model downloaded")
+
+        print("✅ Model downloaded correctly")
 
 
-# ✅ Load model (lazy loading)
+# ✅ LOAD MODEL WHEN NEEDED
 def load_model():
     global model
     if model is None:
@@ -34,19 +45,18 @@ def load_model():
         print("✅ Model loaded")
 
 
-# ✅ Home route
+# ✅ HOME ROUTE
 @app.route('/')
 def home():
     return "Mosquito API is running successfully 🚀"
 
 
-# ✅ Prediction route
+# ✅ PREDICT ROUTE
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
         global model
 
-        # Load model only when needed
         if model is None:
             load_model()
 
@@ -81,7 +91,7 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 
-# ✅ IMPORTANT: Only for LOCAL RUN (NOT for Render)
+# ✅ FOR LOCAL RUN ONLY
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
