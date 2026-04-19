@@ -1,0 +1,17 @@
+<body style="background:#111; color:white; text-align:center; font-family:Segoe UI;">
+
+<h1>Prediction Result</h1>
+
+<img src="{{ image_path }}" width="300" style="border-radius:10px;"><br><br>
+
+<h2 style="color:#00e676;">{{ label }} ({{ confidence }}%)</h2>
+
+<div style="background:#222; padding:20px; border-radius:10px; display:inline-block;">
+    <p><b>Scientific Name:</b> {{ info["Scientific Name"] }}</p>
+    <p><b>Disease:</b> {{ info["Disease"] }}</p>
+    <p><b>Biting Time:</b> {{ info["Biting Time"] }}</p>
+    <p><b>Appearance:</b> {{ info["Appearance"] }}</p>
+    <p><b>Habitat:</b> {{ info["Habitat"] }}</p>
+</div>
+
+</body>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mosquito Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🦟 Mosquito Species Detection</h1>
+
+    <form action="/predict" method="post" enctype="multipart/form-data">
+        <input type="file" name="image" required><br>
+        <button type="submit">Predict</button>
+    </form>
+
+    <!-- HOW IT WORKS -->
+    <div class="info-section">
+        <h3>⚙️ How It Works</h3>
+        <p>
+            Upload a mosquito image → AI analyzes features →
+            predicts species → displays biological details.
+        </p>
+    </div>
+
+    <!-- PUBLIC AWARENESS -->
+    <div class="info-section">
+        <h3>🌍 Why This Matters</h3>
+        <p>
+            Mosquitoes transmit deadly diseases like dengue and filariasis.
+            Identifying species helps in prevention and control.
+        </p>
+    </div>
+
+</div>
+
+</body>
+</html>
