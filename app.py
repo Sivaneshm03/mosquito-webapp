@@ -7,13 +7,13 @@ import requests
 
 app = Flask(__name__)
 
-MODEL_URL = "YOUR_MODEL_LINK_HERE"
+MODEL_URL = "YOUR_MODEL_LINK_HERE"   # ⚠️ PUT YOUR REAL MODEL LINK
 MODEL_PATH = "mosquito_model.h5"
 
 model = None
 
-# ❌ DO NOT LOAD MODEL AT STARTUP
 
+# ✅ Download model if not exists
 def download_model():
     if not os.path.exists(MODEL_PATH):
         print("⬇️ Downloading model...")
@@ -24,6 +24,8 @@ def download_model():
                     f.write(chunk)
         print("✅ Model downloaded")
 
+
+# ✅ Load model (lazy loading)
 def load_model():
     global model
     if model is None:
@@ -31,21 +33,22 @@ def load_model():
         model = tf.keras.models.load_model(MODEL_PATH)
         print("✅ Model loaded")
 
+
+# ✅ Home route
 @app.route('/')
 def home():
     return "Mosquito API is running successfully 🚀"
 
+
+# ✅ Prediction route
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
         global model
 
-        # 🔥 LOAD MODEL ONLY HERE (IMPORTANT)
+        # Load model only when needed
         if model is None:
             load_model()
-
-        if model is None:
-            return jsonify({"error": "Model not loaded"}), 500
 
         if 'file' not in request.files:
             return jsonify({"error": "No file uploaded"}), 400
@@ -76,3 +79,9 @@ def predict():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# ✅ IMPORTANT: Only for LOCAL RUN (NOT for Render)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
