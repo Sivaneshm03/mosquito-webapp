@@ -1,7 +1,5 @@
 flask
-tensorflow==2.13.0
-pillow
+tensorflow
 numpy
-gunicorn
-requests
+pillow
 gdown
