@@ -1,7 +1,6 @@
 flask
-tensorflow
+tensorflow==2.12.0
+tensorflow-hub==0.13.0
 numpy
 pillow
 requests
-tensorflow-hub
-gunicorn
