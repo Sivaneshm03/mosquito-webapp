@@ -7,7 +7,7 @@ import requests
 
 app = Flask(__name__)
 
-MODEL_URL = "YOUR_MODEL_LINK_HERE"   # ⚠️ PUT YOUR REAL MODEL LINK
+MODEL_URL = "https://drive.google.com/uc?export=download&id=1Z-pxIwlP1Bf0MUoKmkDSrE-gSUbIvMQi"
 MODEL_PATH = "mosquito_model.h5"
 
 model = None
