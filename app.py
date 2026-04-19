@@ -1,14 +1,18 @@
 from flask import Flask, request, jsonify
 import numpy as np
 from PIL import Image
+import tensorflow as tf
+import os
 
 app = Flask(__name__)
 
-# ✅ ROOT ROUTE (VERY IMPORTANT)
+# ✅ Load trained model
+model = tf.keras.models.load_model("mosquito_model.h5")
+
+# ✅ ROOT ROUTE
 @app.route('/')
 def home():
     return "Mosquito API is running successfully 🚀"
-
 
 # ✅ PREDICT ROUTE
 @app.route('/predict', methods=['POST'])
@@ -20,15 +24,25 @@ def predict():
 
         file = request.files['file']
 
-        # 🔍 Read image
+        # 🔍 Process image
         img = Image.open(file).convert("RGB")
         img = img.resize((224, 224))
         img = np.array(img) / 255.0
         img = np.expand_dims(img, axis=0)
 
-        # 🔥 TEMP PREDICTION (replace with model later)
-        prediction = "Aedes"
-        confidence = "95%"
+        # 🔥 MODEL PREDICTION
+        pred = model.predict(img)
+        raw_conf = float(pred[0][0])
+
+        # 🔍 Classification logic + correct confidence
+        if raw_conf > 0.5:
+            prediction = "Aedes"
+            final_conf = raw_conf
+        else:
+            prediction = "Culex"
+            final_conf = 1 - raw_conf
+
+        confidence = round(final_conf * 100, 2)  # ✅ percentage out of 100
 
         # ✅ RESULT DATA
         if prediction == "Aedes":
@@ -60,6 +74,7 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 
-# ✅ RUN APP
+# ✅ RUN APP (Render compatible)
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
