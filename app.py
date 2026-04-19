@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 import os
-import gdown   # ✅ IMPORTANT
+import gdown
 
 app = Flask(__name__)
 
@@ -13,21 +13,36 @@ MODEL_PATH = "mosquito_model.h5"
 model = None
 
 
-# ✅ SIMPLE & CORRECT DOWNLOAD
+# ✅ ROBUST DOWNLOAD (WITH VERIFICATION)
 def download_model():
     if not os.path.exists(MODEL_PATH):
         print("⬇️ Downloading model...")
         gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
-        print("✅ Model downloaded")
+
+    # 🔥 CHECK FILE SIZE (IMPORTANT)
+    file_size = os.path.getsize(MODEL_PATH)
+
+    if file_size < 5 * 1024 * 1024:   # < 5MB → corrupted
+        print("❌ Model file corrupted. Re-downloading...")
+        os.remove(MODEL_PATH)
+        gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
+
+    print("✅ Model ready")
 
 
-# ✅ LOAD MODEL
+# ✅ LOAD MODEL SAFELY
 def load_model():
     global model
     if model is None:
         download_model()
-        model = tf.keras.models.load_model(MODEL_PATH)
-        print("✅ Model loaded")
+        try:
+            model = tf.keras.models.load_model(MODEL_PATH)
+            print("✅ Model loaded")
+        except Exception:
+            print("❌ Error loading model. Re-downloading...")
+            os.remove(MODEL_PATH)
+            download_model()
+            model = tf.keras.models.load_model(MODEL_PATH)
 
 
 @app.route('/')
@@ -48,26 +63,26 @@ def predict():
 
         file = request.files['file']
 
+        # ✅ IMAGE PREPROCESS
         img = Image.open(file).convert("RGB")
         img = img.resize((224, 224))
         img = np.array(img) / 255.0
         img = np.expand_dims(img, axis=0)
 
+        # ✅ PREDICTION
         pred = model.predict(img)
         raw_conf = float(pred[0][0])
 
         if raw_conf > 0.5:
             prediction = "Aedes"
-            final_conf = raw_conf
+            confidence = raw_conf
         else:
             prediction = "Culex"
-            final_conf = 1 - raw_conf
-
-        confidence = round(final_conf * 100, 2)
+            confidence = 1 - raw_conf
 
         return jsonify({
             "prediction": prediction,
-            "confidence": confidence
+            "confidence": round(confidence * 100, 2)
         })
 
     except Exception as e:
