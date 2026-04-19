@@ -2,16 +2,20 @@
 
 <h1>Prediction Result</h1>
 
+{% if image_path %}
 <img src="{{ image_path }}" width="300" style="border-radius:10px;"><br><br>
+{% endif %}
 
 <h2 style="color:#00e676;">{{ label }} ({{ confidence }}%)</h2>
 
+{% if info %}
 <div style="background:#222; padding:20px; border-radius:10px; display:inline-block;">
-    <p><b>Scientific Name:</b> {{ info["Scientific Name"] }}</p>
-    <p><b>Disease:</b> {{ info["Disease"] }}</p>
-    <p><b>Biting Time:</b> {{ info["Biting Time"] }}</p>
-    <p><b>Appearance:</b> {{ info["Appearance"] }}</p>
-    <p><b>Habitat:</b> {{ info["Habitat"] }}</p>
+    <p><b>Scientific Name:</b> {{ info.get("Scientific Name", "N/A") }}</p>
+    <p><b>Disease:</b> {{ info.get("Disease", "N/A") }}</p>
+    <p><b>Biting Time:</b> {{ info.get("Biting Time", "N/A") }}</p>
+    <p><b>Appearance:</b> {{ info.get("Appearance", "N/A") }}</p>
+    <p><b>Habitat:</b> {{ info.get("Habitat", "N/A") }}</p>
 </div>
+{% endif %}
 
 </body>
