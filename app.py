@@ -1,66 +1,36 @@
 from flask import Flask, request, jsonify
 import tensorflow as tf
-from PIL import Image
 import numpy as np
-import os
-import gdown
+from PIL import Image
 
 app = Flask(__name__)
 
-# =========================
-# DOWNLOAD MODEL FROM DRIVE
-# =========================
-url = "https://drive.google.com/uc?id=1Z-pxIwlP1Bf0MUoKmkDSrE-gSUbIvMQi"
-model_path = "model.h5"
-
-if not os.path.exists(model_path):
-    print("Downloading model...")
-    gdown.download(url, model_path, quiet=False)
-
-# =========================
-# LOAD MODEL
-# =========================
-model = tf.keras.models.load_model(model_path)
-
-classes = ["Aedes", "Culex"]
-
-# =========================
-# PREPROCESS FUNCTION
-# =========================
-def preprocess(image):
-    image = image.resize((224, 224))
-    image = np.array(image) / 255.0
-    image = np.expand_dims(image, axis=0)
-    return image
-
-# =========================
-# ROUTES
-# =========================
-@app.route("/")
-def home():
-    return "API Running"
-
-@app.route("/predict", methods=["POST"])
+@app.route('/predict', methods=['POST'])
 def predict():
-    file = request.files["file"]
-    image = Image.open(file)
+    file = request.files['file']
+    img = Image.open(file).resize((224, 224))
+    img = np.array(img) / 255.0
+    img = np.expand_dims(img, axis=0)
 
-    processed = preprocess(image)
-    prediction = model.predict(processed)
+    prediction = "Aedes"  # (later connect your model)
 
-    confidence = float(np.max(prediction))
-    label = classes[np.argmax(prediction)]
+    if prediction == "Aedes":
+        data = {
+            "species": "Aedes",
+            "family": "Culicidae",
+            "biting_time": "Daytime",
+            "habitat": "Clean stagnant water",
+            "appearance": "Black with white stripes",
+            "disease": "Dengue, Zika, Chikungunya"
+        }
+    else:
+        data = {
+            "species": "Culex",
+            "family": "Culicidae",
+            "biting_time": "Night",
+            "habitat": "Dirty stagnant water",
+            "appearance": "Brownish color",
+            "disease": "Filariasis, West Nile Virus"
+        }
 
-    if confidence < 0.7:
-        label = "Unknown"
-
-    return jsonify({
-        "label": label,
-        "confidence": round(confidence * 100, 2)
-    })
-
-# =========================
-# RUN SERVER
-# =========================
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    return jsonify(data)
