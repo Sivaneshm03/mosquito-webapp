@@ -7,67 +7,59 @@ import requests
 
 app = Flask(__name__)
 
-# 🔗 YOUR MODEL DOWNLOAD LINK (PUT YOUR LINK HERE)
-MODEL_URL = "https://your-model-link.com/mosquito_model.h5"
+MODEL_URL = "YOUR_MODEL_LINK_HERE"
 MODEL_PATH = "mosquito_model.h5"
 
 model = None
 
-# ✅ Download model if not exists
+# ❌ DO NOT LOAD MODEL AT STARTUP
+
 def download_model():
     if not os.path.exists(MODEL_PATH):
         print("⬇️ Downloading model...")
-        r = requests.get(MODEL_URL)
+        r = requests.get(MODEL_URL, stream=True)
         with open(MODEL_PATH, "wb") as f:
-            f.write(r.content)
+            for chunk in r.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
         print("✅ Model downloaded")
 
-# ✅ Load model safely
-def load_model_safe():
+def load_model():
     global model
-    try:
-        if model is None:
-            download_model()
-            model = tf.keras.models.load_model(MODEL_PATH)
-            print("✅ Model loaded successfully")
-    except Exception as e:
-        print("❌ Model loading failed:", e)
+    if model is None:
+        download_model()
+        model = tf.keras.models.load_model(MODEL_PATH)
+        print("✅ Model loaded")
 
-# ✅ ROOT ROUTE
 @app.route('/')
 def home():
     return "Mosquito API is running successfully 🚀"
 
-# ✅ PREDICT ROUTE
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
         global model
 
-        # 🔥 Ensure model is loaded
+        # 🔥 LOAD MODEL ONLY HERE (IMPORTANT)
         if model is None:
-            load_model_safe()
+            load_model()
 
         if model is None:
             return jsonify({"error": "Model not loaded"}), 500
 
-        # 🔍 Check file
         if 'file' not in request.files:
             return jsonify({"error": "No file uploaded"}), 400
 
         file = request.files['file']
 
-        # 🔍 Process image
         img = Image.open(file).convert("RGB")
         img = img.resize((224, 224))
         img = np.array(img) / 255.0
         img = np.expand_dims(img, axis=0)
 
-        # 🔥 MODEL PREDICTION
         pred = model.predict(img)
         raw_conf = float(pred[0][0])
 
-        # 🔍 Classification logic
         if raw_conf > 0.5:
             prediction = "Aedes"
             final_conf = raw_conf
@@ -77,34 +69,10 @@ def predict():
 
         confidence = round(final_conf * 100, 2)
 
-        # ✅ RESULT DATA
-        if prediction == "Aedes":
-            data = {
-                "prediction": prediction,
-                "confidence": confidence,
-                "species": "Aedes aegypti",
-                "family": "Culicidae",
-                "biting_time": "Daytime",
-                "habitat": "Clean stagnant water",
-                "appearance": "Black with white stripes",
-                "disease": "Dengue, Zika, Chikungunya"
-            }
-        else:
-            data = {
-                "prediction": prediction,
-                "confidence": confidence,
-                "species": "Culex",
-                "family": "Culicidae",
-                "biting_time": "Night",
-                "habitat": "Dirty stagnant water",
-                "appearance": "Brownish color",
-                "disease": "Filariasis, West Nile Virus"
-            }
-
-        return jsonify(data)
+        return jsonify({
+            "prediction": prediction,
+            "confidence": confidence
+        })
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
-# ✅ Render will use gunicorn, no need for app.run
