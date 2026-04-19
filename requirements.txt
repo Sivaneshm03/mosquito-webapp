@@ -4,3 +4,4 @@ tensorflow-hub==0.13.0
 numpy
 pillow
 requests
+gunicorn
