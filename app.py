@@ -3,11 +3,35 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 import os
+import requests
 
 app = Flask(__name__)
 
-# ✅ Load trained model
-model = tf.keras.models.load_model("mosquito_model.h5")
+# 🔗 YOUR MODEL DOWNLOAD LINK (PUT YOUR LINK HERE)
+MODEL_URL = "https://your-model-link.com/mosquito_model.h5"
+MODEL_PATH = "mosquito_model.h5"
+
+model = None
+
+# ✅ Download model if not exists
+def download_model():
+    if not os.path.exists(MODEL_PATH):
+        print("⬇️ Downloading model...")
+        r = requests.get(MODEL_URL)
+        with open(MODEL_PATH, "wb") as f:
+            f.write(r.content)
+        print("✅ Model downloaded")
+
+# ✅ Load model safely
+def load_model_safe():
+    global model
+    try:
+        if model is None:
+            download_model()
+            model = tf.keras.models.load_model(MODEL_PATH)
+            print("✅ Model loaded successfully")
+    except Exception as e:
+        print("❌ Model loading failed:", e)
 
 # ✅ ROOT ROUTE
 @app.route('/')
@@ -18,6 +42,15 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
+        global model
+
+        # 🔥 Ensure model is loaded
+        if model is None:
+            load_model_safe()
+
+        if model is None:
+            return jsonify({"error": "Model not loaded"}), 500
+
         # 🔍 Check file
         if 'file' not in request.files:
             return jsonify({"error": "No file uploaded"}), 400
@@ -34,7 +67,7 @@ def predict():
         pred = model.predict(img)
         raw_conf = float(pred[0][0])
 
-        # 🔍 Classification logic + correct confidence
+        # 🔍 Classification logic
         if raw_conf > 0.5:
             prediction = "Aedes"
             final_conf = raw_conf
@@ -42,7 +75,7 @@ def predict():
             prediction = "Culex"
             final_conf = 1 - raw_conf
 
-        confidence = round(final_conf * 100, 2)  # ✅ percentage out of 100
+        confidence = round(final_conf * 100, 2)
 
         # ✅ RESULT DATA
         if prediction == "Aedes":
@@ -74,7 +107,4 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 
-# ✅ RUN APP (Render compatible)
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+# ✅ Render will use gunicorn, no need for app.run
