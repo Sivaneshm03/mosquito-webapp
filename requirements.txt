@@ -2,6 +2,6 @@ flask
 tensorflow
 numpy
 pillow
-gdown
-gunicorn
 requests
+tensorflow-hub
+gunicorn
