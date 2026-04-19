@@ -3,40 +3,25 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 import os
-import requests
+import gdown   # ✅ IMPORTANT
 
 app = Flask(__name__)
 
-MODEL_URL = "https://drive.google.com/uc?export=download&id=1Z-pxIwlP1Bf0MUoKmkDSrE-gSUbIvMQi"
+MODEL_URL = "https://drive.google.com/uc?id=1Z-pxIwlP1Bf0MUoKmkDSrE-gSUbIvMQi"
 MODEL_PATH = "mosquito_model.h5"
 
 model = None
 
 
-# ✅ FIXED DOWNLOAD FUNCTION (Google Drive compatible)
+# ✅ SIMPLE & CORRECT DOWNLOAD
 def download_model():
     if not os.path.exists(MODEL_PATH):
         print("⬇️ Downloading model...")
-
-        session = requests.Session()
-        response = session.get(MODEL_URL, stream=True)
-
-        # Handle Google Drive large file confirmation
-        for key, value in response.cookies.items():
-            if key.startswith('download_warning'):
-                params = {'id': MODEL_URL.split("id=")[-1], 'confirm': value}
-                response = session.get(MODEL_URL, params=params, stream=True)
-                break
-
-        with open(MODEL_PATH, "wb") as f:
-            for chunk in response.iter_content(32768):
-                if chunk:
-                    f.write(chunk)
-
-        print("✅ Model downloaded correctly")
+        gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
+        print("✅ Model downloaded")
 
 
-# ✅ LOAD MODEL WHEN NEEDED
+# ✅ LOAD MODEL
 def load_model():
     global model
     if model is None:
@@ -45,13 +30,11 @@ def load_model():
         print("✅ Model loaded")
 
 
-# ✅ HOME ROUTE
 @app.route('/')
 def home():
     return "Mosquito API is running successfully 🚀"
 
 
-# ✅ PREDICT ROUTE
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
@@ -91,7 +74,6 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 
-# ✅ FOR LOCAL RUN ONLY
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
