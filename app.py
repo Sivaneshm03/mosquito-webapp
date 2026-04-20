@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import numpy as np
 from PIL import Image
 import tensorflow as tf
-import tensorflow_hub as hub   # 🔥 IMPORTANT
+import tensorflow_hub as hub   # ✅ IMPORTANT
 import os
 import requests
 
@@ -29,23 +29,23 @@ def download_model():
         print("✅ Model downloaded")
 
 
-# 🔥 LOAD MODEL (FIXED FOR SWIN + TF HUB)
+# 🔥 LOAD MODEL (FIXED)
 def load_model():
     global model
 
     if model is None:
         download_model()
 
-        # ✅ Check file size (avoid corrupted file)
+        # ✅ Check file size
         if os.path.getsize(MODEL_PATH) < 10_000_000:
             raise Exception("❌ Model file corrupted or not downloaded properly")
 
         print("📦 Loading model...")
 
+        # ✅ CORRECT INDENTATION + TF HUB FIX
         model = tf.keras.models.load_model(
             MODEL_PATH,
-            custom_objects={'KerasLayer': hub.KerasLayer},  # 🔥 FIX
-            compile=False                                  # 🔥 FIX
+            custom_objects={'KerasLayer': hub.KerasLayer}
         )
 
         print("✅ Model loaded successfully")
