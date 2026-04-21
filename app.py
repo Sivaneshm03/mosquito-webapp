@@ -9,7 +9,7 @@ import threading
 
 app = Flask(__name__)
 
-MODEL_URL = "https://github.com/Sivaneshm03/mosquito-webapp/releases/download/v1/swin_model_final.h5"
+MODEL_URL = "https://huggingface.co/Sivaneshm03/mosquito-classifier/resolve/main/swin_model_final.h5"
 MODEL_PATH = "model.h5"
 CLASS_NAMES = ["Aedes", "Culex"]
 model = None
